@@ -1,0 +1,35 @@
+{
+	"schemaVersion": 1,
+	"id": "old-animations",
+	"version": "${version}",
+	"name": "Sword Blocking",
+	"description": "Mod that adds a client sided animation of the sword blocking mechanic similar to 1.8.9.",
+	"authors": [
+		"Unblonded"
+	],
+	"contact": {
+		"homepage": "https://fabricmc.net/",
+		"sources": "https://github.com/FabricMC/fabric-example-mod"
+	},
+	"license": "CC0-1.0",
+	"icon": "assets/sword-blocking/icon.png",
+	"environment": "client",
+	"entrypoints": {
+		"client": [
+			"unblonded.swords.SwordBlocking",
+			"unblonded.swords.ConfigCommand"
+		]
+	},
+	"mixins": [
+		"sword-blocking.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.16.14",
+		"minecraft": "~1.21.5",
+		"java": ">=21",
+		"fabric-api": "*"
+	},
+	"suggests": {
+		"another-mod": "*"
+	}
+}
