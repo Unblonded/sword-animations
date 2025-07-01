@@ -10,14 +10,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ConfigScreen extends Screen {
-    private final Config config = Config.config;
+    private final Config config = Config.config; // Use getInstance()
 
     private final List<TextFieldWidget> transformFields = new ArrayList<>();
     private ButtonWidget swordBlockingButton;
     private ButtonWidget customHandRenderButton;
 
+    // Hot reload tracking
+    private int hotReloadTimer = 0;
+    private final String[] previousText = new String[4];
+    private final int[] fieldYPositions = new int[4];
+    private static final int HOT_RELOAD_DELAY = 10; // Delay in ticks (0.5 seconds)
+
     public ConfigScreen() {
-        super(Text.literal("Config Editor"));
+        super(Text.literal("Sword Blocking Config Editor"));
     }
 
     @Override
@@ -28,9 +34,12 @@ public class ConfigScreen extends Screen {
 
         String[] labels = {"Scale", "X", "Y", "Z"};
         for (int i = 0; i < 4; i++) {
+            final int index = i;
             TextFieldWidget field = new TextFieldWidget(this.textRenderer, centerX - 50, y, 100, 20, Text.literal(""));
             field.setPlaceholder(Text.literal(labels[i]));
             field.setText(String.valueOf(config.handRenderTransform[i]));
+            previousText[i] = field.getText();
+            fieldYPositions[i] = y;
             this.addDrawableChild(field);
             transformFields.add(field);
             y += 25;
@@ -56,6 +65,47 @@ public class ConfigScreen extends Screen {
             applyChanges();
             this.close();
         }).dimensions(centerX - 50, y, 100, 20).build());
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+
+        for (int i = 0; i < 4; i++) {
+            String current = transformFields.get(i).getText();
+            if (!current.equals(previousText[i])) {
+                previousText[i] = current;
+                hotReloadTimer = HOT_RELOAD_DELAY;
+            }
+        }
+
+        if (hotReloadTimer > 0) {
+            hotReloadTimer--;
+            if (hotReloadTimer == 0) {
+                applyTransformChanges();
+            }
+        }
+    }
+
+    private void applyTransformChanges() {
+        // Apply only text field changes for hot reload
+        boolean changed = false;
+        for (int i = 0; i < 4; i++) {
+            try {
+                float newValue = Float.parseFloat(transformFields.get(i).getText());
+                if (config.handRenderTransform[i] != newValue) {
+                    config.handRenderTransform[i] = newValue;
+                    changed = true;
+                }
+            } catch (NumberFormatException ignored) {
+                // Keep original value if parsing fails
+            }
+        }
+
+        if (changed) {
+            config.save();
+            System.out.println("Hot reload: Transform values updated");
+        }
     }
 
     private void applyChanges() {
@@ -86,6 +136,11 @@ public class ConfigScreen extends Screen {
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         super.render(context, mouseX, mouseY, delta);
         context.drawCenteredTextWithShadow(this.textRenderer, this.title, this.width / 2, 15, 0xFFFFFF);
+
+        // Show hot reload status
+        if (hotReloadTimer > 0) {
+            context.drawTextWithShadow(this.textRenderer, "Updating...", 10, 10, 0x00FF00);
+        }
     }
 
     @Override
