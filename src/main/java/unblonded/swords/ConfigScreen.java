@@ -10,18 +10,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ConfigScreen extends Screen {
-    private final Config config = Config.config; // Use getInstance()
+    private final Config config = Config.config;
 
     private final List<TextFieldWidget> transformFields = new ArrayList<>();
+    private TextFieldWidget spinSpeedField;
+    private final String[] previousText = new String[4];
+    private String previousSpinSpeedText; // Add this line
     private ButtonWidget swordBlockingButton;
     private ButtonWidget customHandRenderButton;
     private ButtonWidget oldHeadButton;
+    private ButtonWidget spinItemsButton;
 
-    // Hot reload tracking
     private int hotReloadTimer = 0;
-    private final String[] previousText = new String[4];
-    private final int[] fieldYPositions = new int[4];
-    private static final int HOT_RELOAD_DELAY = 2; // Delay in ticks (0.5 seconds)
+    private static final int HOT_RELOAD_DELAY = 2;
 
     public ConfigScreen() {
         super(Text.literal("Sword Blocking Config Editor"));
@@ -33,6 +34,7 @@ public class ConfigScreen extends Screen {
         int centerX = this.width / 2;
         int y = 40;
 
+        // handRenderTransform fields
         String[] labels = {"Scale", "X", "Y", "Z"};
         for (int i = 0; i < 4; i++) {
             final int index = i;
@@ -40,16 +42,16 @@ public class ConfigScreen extends Screen {
             field.setPlaceholder(Text.literal(labels[i]));
             field.setText(String.valueOf(config.handRenderTransform[i]));
             previousText[i] = field.getText();
-            fieldYPositions[i] = y;
             this.addDrawableChild(field);
             transformFields.add(field);
             y += 25;
         }
 
+        // Toggle buttons
         swordBlockingButton = ButtonWidget.builder(getToggleText("Sword Blocking", config.swordBlocking), btn -> {
             config.swordBlocking = !config.swordBlocking;
             btn.setMessage(getToggleText("Sword Blocking", config.swordBlocking));
-            config.save(); // Save immediately when toggled
+            config.save();
         }).dimensions(centerX - 75, y, 150, 20).build();
         this.addDrawableChild(swordBlockingButton);
         y += 25;
@@ -65,11 +67,28 @@ public class ConfigScreen extends Screen {
         customHandRenderButton = ButtonWidget.builder(getToggleText("Custom Hand Render", config.customHandRender), btn -> {
             config.customHandRender = !config.customHandRender;
             btn.setMessage(getToggleText("Custom Hand Render", config.customHandRender));
-            config.save(); // Save immediately when toggled
+            config.save();
         }).dimensions(centerX - 75, y, 150, 20).build();
         this.addDrawableChild(customHandRenderButton);
+        y += 25;
+
+        spinItemsButton = ButtonWidget.builder(getToggleText("Spin Items", config.spinItems), btn -> {
+            config.spinItems = !config.spinItems;
+            btn.setMessage(getToggleText("Spin Items", config.spinItems));
+            config.save();
+        }).dimensions(centerX - 75, y, 150, 20).build();
+        this.addDrawableChild(spinItemsButton);
+        y += 25;
+
+        // Spin Speed field
+        spinSpeedField = new TextFieldWidget(this.textRenderer, centerX - 50, y, 100, 20, Text.literal(""));
+        spinSpeedField.setPlaceholder(Text.literal("Spin Speed"));
+        spinSpeedField.setText(String.valueOf(config.spinSpeed));
+        previousSpinSpeedText = spinSpeedField.getText(); // Add this line
+        this.addDrawableChild(spinSpeedField);
         y += 30;
 
+        // Done button
         this.addDrawableChild(ButtonWidget.builder(Text.literal("Done"), btn -> {
             applyChanges();
             this.close();
@@ -80,10 +99,20 @@ public class ConfigScreen extends Screen {
     public void tick() {
         super.tick();
 
+        // Check transform fields for changes
         for (int i = 0; i < 4; i++) {
             String current = transformFields.get(i).getText();
             if (!current.equals(previousText[i])) {
                 previousText[i] = current;
+                hotReloadTimer = HOT_RELOAD_DELAY;
+            }
+        }
+
+        // Check spin speed field for changes
+        if (spinSpeedField != null) {
+            String currentSpinSpeed = spinSpeedField.getText();
+            if (!currentSpinSpeed.equals(previousSpinSpeedText)) {
+                previousSpinSpeedText = currentSpinSpeed;
                 hotReloadTimer = HOT_RELOAD_DELAY;
             }
         }
@@ -97,8 +126,9 @@ public class ConfigScreen extends Screen {
     }
 
     private void applyTransformChanges() {
-        // Apply only text field changes for hot reload
         boolean changed = false;
+
+        // Apply transform fields
         for (int i = 0; i < 4; i++) {
             try {
                 float newValue = Float.parseFloat(transformFields.get(i).getText());
@@ -106,33 +136,43 @@ public class ConfigScreen extends Screen {
                     config.handRenderTransform[i] = newValue;
                     changed = true;
                 }
+            } catch (NumberFormatException ignored) {}
+        }
+
+        // Apply spin speed field
+        if (spinSpeedField != null) {
+            try {
+                float newSpinSpeed = Float.parseFloat(spinSpeedField.getText());
+                if (config.spinSpeed != newSpinSpeed) {
+                    config.spinSpeed = newSpinSpeed;
+                    changed = true;
+                }
             } catch (NumberFormatException ignored) {
-                // Keep original value if parsing fails
+                System.out.println("Invalid spin speed input: " + spinSpeedField.getText());
             }
         }
 
         if (changed) {
             config.save();
-            System.out.println("Hot reload: Transform values updated");
+            System.out.println("Hot reload: Transform or spinSpeed values updated");
         }
     }
 
     private void applyChanges() {
-        // Apply text field changes
         for (int i = 0; i < 4; i++) {
             try {
                 config.handRenderTransform[i] = Float.parseFloat(transformFields.get(i).getText());
-            } catch (NumberFormatException ignored) {
-                // Keep original value if parsing fails
-            }
+            } catch (NumberFormatException ignored) {}
         }
-        // Save the config after applying changes
+        try {
+            config.spinSpeed = Float.parseFloat(spinSpeedField.getText());
+        } catch (NumberFormatException ignored) {}
+
         config.save();
     }
 
     @Override
     public void close() {
-        // Apply changes when screen is closed (including ESC key)
         applyChanges();
         super.close();
     }
@@ -146,7 +186,6 @@ public class ConfigScreen extends Screen {
         super.render(context, mouseX, mouseY, delta);
         context.drawCenteredTextWithShadow(this.textRenderer, this.title, this.width / 2, 15, 0xFFFFFF);
 
-        // Show hot reload status
         if (hotReloadTimer > 0) {
             context.drawTextWithShadow(this.textRenderer, "Updating...", 10, 10, 0x00FF00);
         }

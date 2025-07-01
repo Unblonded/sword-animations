@@ -1,5 +1,7 @@
 package unblonded.swords.mixin;
 
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemDisplayContext;
 import net.minecraft.item.Items;
 import org.spongepowered.asm.mixin.Mixin;
@@ -35,6 +37,13 @@ public class HandRenderMixin {
 			float z = config.handRenderTransform[3];
 			matrices.scale(s,s,s);
 			matrices.translate(x,y,z);
+		}
+		if (config.spinItems && !SwordBlocking.mc.options.attackKey.isPressed() && !SwordBlocking.isEntityBlocking((ClientPlayerEntity) entity)) {
+			long currentTimeMillis = System.currentTimeMillis();
+			float timeInSeconds = (currentTimeMillis % 100_000L) / 1000f;
+			float angle = (timeInSeconds * config.spinSpeed) % 360f;
+
+			matrices.multiply(new Quaternionf().rotateX((float) Math.toRadians(angle)));
 		}
 		if (config.swordBlocking && SwordBlocking.isEntityBlocking((ClientPlayerEntity) entity) && SwordBlocking.isSword(stack.getItem())) {
 			matrices.translate(0,0.05,0);

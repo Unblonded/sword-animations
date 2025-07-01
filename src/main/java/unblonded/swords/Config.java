@@ -19,6 +19,8 @@ public class Config {
     public boolean swordBlocking;
     public boolean customHandRender;
     public boolean oldHead;
+    public boolean spinItems;
+    public float spinSpeed;
 
     private Config() {
         // Default values
@@ -26,6 +28,8 @@ public class Config {
         swordBlocking = true;
         customHandRender = false;
         oldHead = false;
+        spinItems = false;
+        spinSpeed = 45.0f;
 
         // Load immediately when instance is created
         load();
@@ -54,6 +58,8 @@ public class Config {
                     this.swordBlocking = loaded.swordBlocking;
                     this.customHandRender = loaded.customHandRender;
                     this.oldHead = loaded.oldHead;
+                    this.spinItems = loaded.spinItems;
+                    this.spinSpeed = loaded.spinSpeed;
 
                     System.out.println("Config loaded successfully!");
                     System.out.println("Loaded values: swordBlocking=" + swordBlocking +
