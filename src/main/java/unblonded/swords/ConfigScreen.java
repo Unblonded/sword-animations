@@ -15,12 +15,13 @@ public class ConfigScreen extends Screen {
     private final List<TextFieldWidget> transformFields = new ArrayList<>();
     private ButtonWidget swordBlockingButton;
     private ButtonWidget customHandRenderButton;
+    private ButtonWidget oldHeadButton;
 
     // Hot reload tracking
     private int hotReloadTimer = 0;
     private final String[] previousText = new String[4];
     private final int[] fieldYPositions = new int[4];
-    private static final int HOT_RELOAD_DELAY = 10; // Delay in ticks (0.5 seconds)
+    private static final int HOT_RELOAD_DELAY = 2; // Delay in ticks (0.5 seconds)
 
     public ConfigScreen() {
         super(Text.literal("Sword Blocking Config Editor"));
@@ -51,6 +52,14 @@ public class ConfigScreen extends Screen {
             config.save(); // Save immediately when toggled
         }).dimensions(centerX - 75, y, 150, 20).build();
         this.addDrawableChild(swordBlockingButton);
+        y += 25;
+
+        oldHeadButton = ButtonWidget.builder(getToggleText("Old Head Holding", config.oldHead), btn -> {
+            config.oldHead = !config.oldHead;
+            btn.setMessage(getToggleText("Old Head Holding", config.oldHead));
+            config.save();
+        }).dimensions(centerX - 75, y, 150, 20).build();
+        this.addDrawableChild(oldHeadButton);
         y += 25;
 
         customHandRenderButton = ButtonWidget.builder(getToggleText("Custom Hand Render", config.customHandRender), btn -> {

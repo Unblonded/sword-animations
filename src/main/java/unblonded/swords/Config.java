@@ -18,12 +18,14 @@ public class Config {
     public float[] handRenderTransform;
     public boolean swordBlocking;
     public boolean customHandRender;
+    public boolean oldHead;
 
     private Config() {
         // Default values
         handRenderTransform = new float[] {1.0f, 0.0f, 0.0f, 0.0f};
         swordBlocking = true;
         customHandRender = false;
+        oldHead = false;
 
         // Load immediately when instance is created
         load();
@@ -51,6 +53,7 @@ public class Config {
                             loaded.handRenderTransform : new float[] {1.0f, 0.0f, 0.0f, 0.0f};
                     this.swordBlocking = loaded.swordBlocking;
                     this.customHandRender = loaded.customHandRender;
+                    this.oldHead = loaded.oldHead;
 
                     System.out.println("Config loaded successfully!");
                     System.out.println("Loaded values: swordBlocking=" + swordBlocking +
@@ -69,10 +72,5 @@ public class Config {
             e.printStackTrace(); // Add stack trace for debugging
             System.out.println("Using default values");
         }
-    }
-
-    // Method to reload config from file
-    public void reload() {
-        load();
     }
 }
