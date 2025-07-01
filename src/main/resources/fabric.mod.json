@@ -2,7 +2,7 @@
 	"schemaVersion": 1,
 	"id": "old-animations",
 	"version": "${version}",
-	"name": "Sword Blocking",
+	"name": "Old Animations",
 	"description": "Mod that adds a client sided animation of the sword blocking mechanic similar to 1.8.9.",
 	"authors": [
 		"Unblonded"
